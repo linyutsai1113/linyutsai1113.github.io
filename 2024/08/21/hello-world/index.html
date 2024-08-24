@@ -185,7 +185,7 @@
     if (window.DISQUS) disqusReset()
     else {
       const script = document.createElement('script')
-      script.src = 'https://.disqus.com/embed.js'
+      script.src = 'https://linyutsai1113.disqus.com/embed.js'
       script.setAttribute('data-timestamp', +new Date())
       document.head.appendChild(script)
     }
@@ -197,7 +197,7 @@
       if (!eleGroup) return
       const cleanedLinks = eleGroup.href.replace(/#post-comment$/, '')
 
-      const res = await fetch(`https://disqus.com/api/3.0/threads/set.json?forum=&api_key=&thread:link=${cleanedLinks}`,{
+      const res = await fetch(`https://disqus.com/api/3.0/threads/set.json?forum=linyutsai1113&api_key=&thread:link=${cleanedLinks}`,{
         method: 'GET'
       })
       const result = await res.json()
