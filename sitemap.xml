@@ -118,21 +118,14 @@
   </url>
   
   <url>
-    <loc>https://linyutsai1113.github.io/tags/CS224w/</loc>
-    <lastmod>2025-08-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://linyutsai1113.github.io/tags/ML-DL/</loc>
-    <lastmod>2025-08-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://linyutsai1113.github.io/tags/GCNs/</loc>
+    <lastmod>2025-08-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://linyutsai1113.github.io/tags/CS224w/</loc>
     <lastmod>2025-08-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -154,6 +147,13 @@
   
   <url>
     <loc>https://linyutsai1113.github.io/tags/RDP/</loc>
+    <lastmod>2025-08-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://linyutsai1113.github.io/tags/ML-DL/</loc>
     <lastmod>2025-08-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
