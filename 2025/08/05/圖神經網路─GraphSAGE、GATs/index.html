@@ -1,0 +1,376 @@
+<!DOCTYPE html><html lang="zh-tw" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>圖神經網路 (GNNs) ─ 搞懂 GCN、GraphSAGE、GAT | LYT's 學習筆記</title><meta name="author" content="Lin, Yu-Tsai"><meta name="copyright" content="Lin, Yu-Tsai"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="圖神經網路怎麼運作？一次搞懂 GCN、GraphSAGE、GAT單層 GNN 運作機制這裡的目標是要將許多個向量壓縮成單一向量，會經過兩個步驟：  計算每個節點的訊息 (message computation)：  每個節點從它的鄰居節點接收訊息，這些訊息通常來自鄰居節點的特徵向量，而聚合過程應具有排列不變性 (permutation invariance)  Message function:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="圖神經網路 (GNNs) ─ 搞懂 GCN、GraphSAGE、GAT">
+<meta property="og:url" content="https://linyutsai1113.github.io/2025/08/05/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GraphSAGE%E3%80%81GATs/index.html">
+<meta property="og:site_name" content="LYT&#39;s 學習筆記">
+<meta property="og:description" content="圖神經網路怎麼運作？一次搞懂 GCN、GraphSAGE、GAT單層 GNN 運作機制這裡的目標是要將許多個向量壓縮成單一向量，會經過兩個步驟：  計算每個節點的訊息 (message computation)：  每個節點從它的鄰居節點接收訊息，這些訊息通常來自鄰居節點的特徵向量，而聚合過程應具有排列不變性 (permutation invariance)  Message function:">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://linyutsai1113.github.io/img/ProfilePicturePhoto.jpg">
+<meta property="article:published_time" content="2025-08-04T23:52:42.000Z">
+<meta property="article:modified_time" content="2025-08-05T00:01:24.678Z">
+<meta property="article:author" content="Lin, Yu-Tsai">
+<meta property="article:tag" content="GNNs">
+<meta property="article:tag" content="CS224w">
+<meta property="article:tag" content="GCNs">
+<meta property="article:tag" content="GraphSAGE">
+<meta property="article:tag" content="GATs">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://linyutsai1113.github.io/img/ProfilePicturePhoto.jpg">
+<meta property="fb:app_id" content="5301583946720287"><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://linyutsai1113.github.io/2025/08/05/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GraphSAGE%E3%80%81GATs/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="g7u_ajagkrZ0v4vJqrTgK92izkFPrznkNkvF62yapWI"/><link rel="stylesheet" href="/css/index.css?v=4.13.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: {"appId":"73WPPTZHMA","apiKey":"1d8dcbd1869dbc43bdbb437ef0918bfc","indexName":"hexo","hits":{"per_page":10},"languages":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}.","hits_stats":"${hits} results found in ${time} ms"}},
+  localSearch: undefined,
+  translate: {"defaultEncoding":1,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Error',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '圖神經網路 (GNNs) ─ 搞懂 GCN、GraphSAGE、GAT',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-08-05 08:01:24'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/ProfilePicturePhoto.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">6</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">13</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">3</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img" id="page-header"><nav id="nav"><span id="blog-info"><a href="/" title="LYT's 學習筆記"><span class="site-name">LYT's 學習筆記</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> Search</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav></header><main class="layout" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">圖神經網路 (GNNs) ─ 搞懂 GCN、GraphSAGE、GAT</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2025-08-04T23:52:42.000Z" title="Created 2025-08-05 07:52:42">2025-08-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-08-05T00:01:24.678Z" title="Updated 2025-08-05 08:01:24">2025-08-05</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%AD%B8%E7%BF%92%E7%AD%86%E8%A8%98/">學習筆記</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="圖神經網路 (GNNs) ─ 搞懂 GCN、GraphSAGE、GAT"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div><article class="post-content" id="article-container"><h3 id="圖神經網路怎麼運作？一次搞懂-GCN、GraphSAGE、GAT"><a href="#圖神經網路怎麼運作？一次搞懂-GCN、GraphSAGE、GAT" class="headerlink" title="圖神經網路怎麼運作？一次搞懂 GCN、GraphSAGE、GAT"></a>圖神經網路怎麼運作？一次搞懂 GCN、GraphSAGE、GAT</h3><h3 id="單層-GNN-運作機制"><a href="#單層-GNN-運作機制" class="headerlink" title="單層 GNN 運作機制"></a>單層 GNN 運作機制</h3><p>這裡的目標是要將許多個向量壓縮成單一向量，會經過兩個步驟：</p>
+<ol>
+<li><p>計算每個節點的訊息 (message computation)：</p>
+<ul>
+<li><p>每個節點從它的鄰居節點接收訊息，這些訊息通常來自鄰居節點的特徵向量，而聚合過程應具有排列不變性 (permutation invariance)</p>
+</li>
+<li><p>Message function: $m_u^{(l)} &#x3D; \text{MSG}^{(l)}(h_u^{(l-1)})$ </p>
+<blockquote>
+<p> $\text{MSG}$ 可以是任意方式用來轉換成 message，例如： $m_u^{(l)} &#x3D; W^{(l)}(h_u^{(l-1)})$，就只是簡單進行權重相乘</p>
+</blockquote>
+<blockquote>
+<p>為了避免來自本身節點的訊息丟失，我們也會對節點本身計算訊息：</p>
+<p>$m_v^{(l)} &#x3D; B^{(l)}(h_v^{(l-1)})$</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>聚合訊息 (message aggregation)：</p>
+<ul>
+<li><p>將所有節點的訊息聚合成一個向量</p>
+</li>
+<li><p>Aggregation function: $h_v^{(l)} &#x3D; \text{AGG}^{(l)}({m_u^{(l)} , u \in N(v)})$ </p>
+<blockquote>
+<p>$\text{AGG}$ 可以是任意方式用來聚合訊息，例如： Sum $(\cdot)$, Mean $(\cdot)$, Max $(\cdot)$ 等等 aggregator，例如： $h_v^{(l)} &#x3D; \text{Sum}({m_u^{(l)}, u \in N(v)})$ </p>
+</blockquote>
+<blockquote>
+<p>一樣為了避免來自本身節點的訊息丟失，我們也會對節點本身計算聚合： </p>
+<p>$h_v^{(l)} &#x3D; \text{CONCAT} ( \text{AGG}({m_u^{(l)} , u \in N(v)}, m_v^{(l)}))$</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>根據需求可以在 message 或 aggregation 加上非線性激活函數 (nonlinearity activation) 來增加表達能力，例如： $\sigma(\cdot)$: ReLU($\cdot$), Sigmoid($\cdot$)</p>
+</blockquote>
+<h3 id="經典-GNN-模型介紹"><a href="#經典-GNN-模型介紹" class="headerlink" title="經典 GNN 模型介紹"></a>經典 GNN 模型介紹</h3><h4 id="Graph-Convolutional-Networks-GCNs"><a href="#Graph-Convolutional-Networks-GCNs" class="headerlink" title="Graph Convolutional Networks (GCNs)"></a>Graph Convolutional Networks (GCNs)</h4><p>取鄰居節點特徵的平均或加總</p>
+<p>$$h_v^{(l+1)} &#x3D; \sigma( \sum_{u \in N(v)} W^{(l)} \frac{h_u^{(l)}}{|N(v)|})$$</p>
+<blockquote>
+<p>注意：GCN 並不是沒有考慮來自本身節點的訊息，而是先在前處理階段加入了一個自環 (實現方法透過讓鄰接矩陣 $\hat{A} &#x3D; A + I$ 使節點本身納入鄰居集合)</p>
+</blockquote>
+<h4 id="GraphSAGE"><a href="#GraphSAGE" class="headerlink" title="GraphSAGE"></a>GraphSAGE</h4><p>對 GCN 進行擴展，AGG 不再限於平均或加總，且明確將鄰居與節點本身分開不再需要添加自環</p>
+<p>$$h_v^{(l+1)} &#x3D; \sigma( W^{(l+1)} \cdot \text{CONCAT}(h_v^{(l)} ,\text{AGG}({h_u^{(l)} , \forall u \in N(v)})) )$$</p>
+<blockquote>
+<p>GraphSAGE 可以用的 aggregation: </p>
+<ul>
+<li><p>Mean: $\text{AGG} &#x3D; \sum_{u \in N(v)} \frac{1}{|N(v)|} h_u^{(l)}$，這是一種近似 GCN 卷積的方法，計算效率高</p>
+</li>
+<li><p>Pool: $\text{AGG} &#x3D; \text{Mean} ({\text{MLP}(h_u^{(l)}), \forall u \in N(v)})$，Mean-pooling 可以換成 Max-pooling，MLP 也可以任意轉換函數</p>
+</li>
+<li><p>LSTM: $\text{AGG} &#x3D; \text{LSTM}({h_u^{(l)} , \forall u \in \pi (N(v))})$，由於鄰居沒有自然順序，隨機重排 (reshuffling) 後再送入 LSTM 可以使其學到順序無關的表示</p>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>GraphSAGE 對每一層都做 L2 正規化 (normalization)，讓 $h_v^{(l)}$ 向量長度始終為 1</p>
+<p>$$h_v^{(l)} \leftarrow \frac{h_v^{(l)}}{|h_v^{(l)}|_2}, \forall v \in V \space where \space ||u||<em>2 &#x3D; \sqrt{\sum</em>{i&#x3D;1} u_i^2}$$ </p>
+<p>這樣做可以讓 embedding vector 更好的計算相似度，也就是說 </p>
+<p>  $$\text{similarity}(h_v, h_u) &#x3D; \cos(\theta) &#x3D; \frac{h_v \cdot h_u}{|h_v|       _2 |h_u|_2} &#x3D; \frac{h_v \cdot h_u}{1 \times 1} &#x3D; h_v \cdot h_u$$</p>
+</blockquote>
+<h4 id="Graph-Attention-Networks-GATs"><a href="#Graph-Attention-Networks-GATs" class="headerlink" title="Graph Attention Networks (GATs)"></a>Graph Attention Networks (GATs)</h4><p>在 GCN 和 GraphSAGE 中將每個鄰居節點資訊視一樣重要 ($\frac{1}{|N(v)|}$)，GAT 則是考慮每個鄰居節點的重要性，透過 attention scores 來衡量鄰居節點對中心節點的重要性，再加權求和。</p>
+<p>$$h_v^{(l+1)} &#x3D; \sigma( \sum_{u \in N(v)} \alpha_{vu} W^{(l+1)}h_u^{(l)} )$$</p>
+<blockquote>
+<p> $\alpha_{vu}$ 是 attention score (weight)</p>
+</blockquote>
+<blockquote>
+<p>  根據注意力機制 (Attention Mechanism) $\text{a}$ 先算出注意力係數 (attention     coefficients) $e_{vu}$ 指出信息 $m_u^{(l)}$ 對於節點 $v$ 的重要性</p>
+<p>   $$e_{vu} &#x3D; \text{a} (W^{(l+1)}h_u^{(l)},W^{(l+1)}h_v^{(l)})$$<br>注意力機制 a 具有可訓練的 parameters，我們可以簡單用一個線性層去做</p>
+<p>$$e_{vu} &#x3D; \text{Linear} ( \text{ Concat}(W^{(l+1)}h_u^{(l)},W^{(l+1)}h_v^    {(l)}))$$</p>
+<p>  有了這個注意力係數，我們希望將他正規化來得到最終的關注權重，使用 softmax 函數讓     $\sum_{u \in &gt;N(v)} \alpha_{vu} &#x3D; 1$</p>
+<p>  $$\alpha_{vu} &#x3D; \frac{\exp(e_{vu})}{\sum_{k \in N(v)} \exp(e_{vk})}$$</p>
+</blockquote>
+<blockquote>
+<p>多頭注意力機制 (multi-head attention) 更穩定的注意力機制學習過程可以更好的收斂，  透過多個 attention head 來分別對不同資訊來源做注意力計算得到多個注意力分數<br>$$h_v^{(l+1)}[k] &#x3D; \sigma\left( \sum_{u \in N(v) \cup {v}} \alpha_{vu}^k W^k h_u^{(l)} \right)$$</p>
+<p>注意：所有注意力頭 (head) k 共享同一個注意力機制 a 但會產生獨立的 $W^k$</p>
+<p>最後再進行一個彙總 $h_v^{(l+1)} &#x3D; \text{AGG}(h_v^{(l+1)}[1], h_v^{(l+1)}[2], \dots, h_v^{(l+1)}[K])$</p>
+</blockquote>
+<h3 id="GNN-模型中常見的層級設計"><a href="#GNN-模型中常見的層級設計" class="headerlink" title="GNN 模型中常見的層級設計"></a>GNN 模型中常見的層級設計</h3><p>$$\underbrace{\text{Linear} \rightarrow \text{BatchNorm} \rightarrow \text{Dropout} \rightarrow \text{Activation} \rightarrow \text{Attention}}_{\text{Transformation}} \rightarrow \text{Aggregation}$$</p>
+<ol>
+<li><p>Batch Normalization: 讓神經網路在訓練過程中更穩定、更快收斂</p>
+<blockquote>
+<p>當你從前一層（例如 Linear 層）輸出一堆節點的嵌入向量，這些向量的值（例如平均值、變異數）可能會有很大的變動。這可能導致模型學習困難，甚至造成梯度爆炸或消失。</p>
+</blockquote>
+<p>對於一個節點特徵矩陣 $X \in \mathbb{R}^{N \times d}$，其中 $N$ 為節點數，$d$ 為每個節點的特徵維度。BatchNorm 在每個特徵維度 $j$ 上進行以下操作：</p>
+<ul>
+<li><p>均值計算 (Across all nodes in mini-batch): $\mu_j &#x3D; \frac{1}{N} \sum_{i&#x3D;1}^{N} x_{ij}$</p>
+</li>
+<li><p>變異數計算 $\sigma_j^2 &#x3D; \frac{1}{N} \sum_{i&#x3D;1}^{N} (x_{ij} - \mu_j)^2$</p>
+</li>
+<li><p>標準化 (Normalization) $\hat{x}<em>{ij} &#x3D; \frac{x</em>{ij} - \mu_j}{\sqrt{\sigma_j^2}}$</p>
+</li>
+<li><p>線性變換 (可學參數) $y_{ij} &#x3D; \gamma_j \hat{x}_{ij} + \beta_j$</p>
+</li>
+</ul>
+<p> 其中：</p>
+<ul>
+<li>$x_{ij}$：第 $i$ 個節點在第 $j$ 維的原始輸入特徵  </li>
+<li>$\hat{x}_{ij}$：正規化後的特徵  </li>
+<li>$y_{ij}$：最終輸出特徵  </li>
+<li>$\gamma_j$ 和 $\beta_j$：第 $j$ 維特徵的可學習參數（scale &amp; shift）</li>
+</ul>
+<blockquote>
+<p>輸出為每個特徵維度經過零均值與單位變異數正規化後的節點嵌入，並可進一步乘上可學習參數 $\gamma$、加上偏移量 $\beta$</p>
+</blockquote>
+</li>
+<li><p>Dropout: 預防過度擬合 (overfitting)</p>
+<ul>
+<li>訓練階段：以機率 $p$ 隨機將神經元設為 0（常用於 message 函數中的線性層）  </li>
+<li>測試階段：使用所有神經元進行推論</li>
+</ul>
+</li>
+<li><p>Activation (Non-linearity): </p>
+<ul>
+<li><p>Rectified linear unit (ReLU) </p>
+<ul>
+<li>$\text{ReLU}(x_i) &#x3D; max(x_i,0)$</li>
+<li>最常用的激活函數，效果穩定</li>
+</ul>
+</li>
+<li><p>Sigmoid (logistic)</p>
+<ul>
+<li>$\sigma(x_i) &#x3D; \frac{1}{1+e^{-x_i}}$</li>
+<li>輸出值介於 0 到 1，常用於需要限制輸出範圍的情境</li>
+</ul>
+</li>
+<li><p>Parametric (Leaky) ReLU</p>
+<ul>
+<li>$\text{PReLU}(x_i) &#x3D; max(x_i, 0) + a_i min(x_i,0)$</li>
+<li>其中 $a_i$ 為可訓練參數，在實務中常比 ReLU 表現更佳</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Attention&#x2F;Gating: 調節鄰居訊息的重要性</p>
+<ul>
+<li>根據不同鄰居節點的特徵，學習其對中心節點的貢獻程度（權重）  </li>
+<li>透過注意力機制或門控單元，選擇性地強化或抑制某些鄰居資訊</li>
+</ul>
+</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://linyutsai1113.github.io">Lin, Yu-Tsai</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://linyutsai1113.github.io/2025/08/05/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GraphSAGE%E3%80%81GATs/">https://linyutsai1113.github.io/2025/08/05/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GraphSAGE%E3%80%81GATs/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GNNs/">GNNs</a><a class="post-meta__tags" href="/tags/CS224w/">CS224w</a><a class="post-meta__tags" href="/tags/GCNs/">GCNs</a><a class="post-meta__tags" href="/tags/GraphSAGE/">GraphSAGE</a><a class="post-meta__tags" href="/tags/GATs/">GATs</a></div><div class="post_share"><div class="addtoany"><div class="a2a_kit a2a_kit_size_32 a2a_default_style"><a class="a2a_button_line"></a><a class="a2a_button_facebook"></a><a class="a2a_button_twitter"></a><a class="a2a_button_facebook_messenger"></a><a class="a2a_button_email"></a><a class="a2a_button_copy_link"></a><a class="a2a_dd" target="_blank" rel="noopener" href="https://www.addtoany.com/share"></a></div></div><script async="async" src="https://static.addtoany.com/menu/page.js"></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2025/08/04/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GCNs/" title="圖神經網路 (GNNs) ─ 從節點嵌入 (Node Embedding) 到圖卷積網路 (GCN)"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">Next</div><div class="next_info">圖神經網路 (GNNs) ─ 從節點嵌入 (Node Embedding) 到圖卷積網路 (GCN)</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2025/08/04/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GCNs/" title="圖神經網路 (GNNs) ─ 從節點嵌入 (Node Embedding) 到圖卷積網路 (GCN)"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-04</div><div class="title">圖神經網路 (GNNs) ─ 從節點嵌入 (Node Embedding) 到圖卷積網路 (GCN)</div></div></a></div><div><a href="/2025/08/01/%E5%88%9D%E6%8E%A2%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF-GNNs/" title="圖神經網路 (GNNs) ─ 初探"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-01</div><div class="title">圖神經網路 (GNNs) ─ 初探</div></div></a></div><div><a href="/2025/08/02/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80ML-DL%E5%9F%BA%E7%A4%8E/" title="圖神經網路 (GNNs) ─ ML&#x2F;DL 基礎"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-02</div><div class="title">圖神經網路 (GNNs) ─ ML&#x2F;DL 基礎</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div class="fb-comments" data-colorscheme="light" data-numposts="10" data-order-by="social" data-width="100%"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/ProfilePicturePhoto.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Lin, Yu-Tsai</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">6</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">13</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">3</div></a></div><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/linyutsai1113" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:mr.lin1113@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">正在就讀中央大學工業管理所，不時會在這裡分享一些自己的心得與學習筆記！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E6%80%8E%E9%BA%BC%E9%81%8B%E4%BD%9C%EF%BC%9F%E4%B8%80%E6%AC%A1%E6%90%9E%E6%87%82-GCN%E3%80%81GraphSAGE%E3%80%81GAT"><span class="toc-number">1.</span> <span class="toc-text">圖神經網路怎麼運作？一次搞懂 GCN、GraphSAGE、GAT</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%96%AE%E5%B1%A4-GNN-%E9%81%8B%E4%BD%9C%E6%A9%9F%E5%88%B6"><span class="toc-number">2.</span> <span class="toc-text">單層 GNN 運作機制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B6%93%E5%85%B8-GNN-%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%B4%B9"><span class="toc-number">3.</span> <span class="toc-text">經典 GNN 模型介紹</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Graph-Convolutional-Networks-GCNs"><span class="toc-number">3.1.</span> <span class="toc-text">Graph Convolutional Networks (GCNs)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#GraphSAGE"><span class="toc-number">3.2.</span> <span class="toc-text">GraphSAGE</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Graph-Attention-Networks-GATs"><span class="toc-number">3.3.</span> <span class="toc-text">Graph Attention Networks (GATs)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GNN-%E6%A8%A1%E5%9E%8B%E4%B8%AD%E5%B8%B8%E8%A6%8B%E7%9A%84%E5%B1%A4%E7%B4%9A%E8%A8%AD%E8%A8%88"><span class="toc-number">4.</span> <span class="toc-text">GNN 模型中常見的層級設計</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/08/05/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GraphSAGE%E3%80%81GATs/" title="圖神經網路 (GNNs) ─ 搞懂 GCN、GraphSAGE、GAT">圖神經網路 (GNNs) ─ 搞懂 GCN、GraphSAGE、GAT</a><time datetime="2025-08-04T23:52:42.000Z" title="Created 2025-08-05 07:52:42">2025-08-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/08/04/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GCNs/" title="圖神經網路 (GNNs) ─ 從節點嵌入 (Node Embedding) 到圖卷積網路 (GCN)">圖神經網路 (GNNs) ─ 從節點嵌入 (Node Embedding) 到圖卷積網路 (GCN)</a><time datetime="2025-08-03T21:08:56.000Z" title="Created 2025-08-04 05:08:56">2025-08-04</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/08/02/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80ML-DL%E5%9F%BA%E7%A4%8E/" title="圖神經網路 (GNNs) ─ ML/DL 基礎">圖神經網路 (GNNs) ─ ML/DL 基礎</a><time datetime="2025-08-01T23:21:28.000Z" title="Created 2025-08-02 07:21:28">2025-08-02</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/08/01/%E5%88%9D%E6%8E%A2%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF-GNNs/" title="圖神經網路 (GNNs) ─ 初探">圖神經網路 (GNNs) ─ 初探</a><time datetime="2025-07-31T19:15:38.000Z" title="Created 2025-08-01 03:15:38">2025-08-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/08/24/%E5%A6%82%E4%BD%95%E7%94%A8-iPad-%E9%81%A0%E7%AB%AF%E9%80%A3%E5%9B%9E%E5%AE%B6%E4%B8%AD-Windows-%E9%9B%BB%E8%85%A6/" title="如何用 iPad 遠端連回家中 Windows 電腦">如何用 iPad 遠端連回家中 Windows 電腦</a><time datetime="2024-08-24T15:04:32.000Z" title="Created 2024-08-24 23:04:32">2024-08-24</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By Lin, Yu-Tsai</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Toggle Between Traditional Chinese And Simplified Chinese">簡</button><button id="darkmode" type="button" title="Toggle Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.13.0"></script><script src="/js/main.js?v=4.13.0"></script><script src="/js/tw_cn.js?v=4.13.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.1
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, '']
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typesetPromise()
+}</script><script>(()=>{
+  const loadFBComment = () => {
+    document.getElementById('fb-root') ? '' : document.body.insertAdjacentHTML('afterend', '<div id="fb-root"></div>')
+
+    const themeNow = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+    const $fbComment = document.getElementsByClassName('fb-comments')[0]
+    $fbComment.setAttribute('data-colorscheme',themeNow)
+    $fbComment.setAttribute('data-href', 'https://linyutsai1113.github.io/2025/08/05/%E5%9C%96%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF%E2%94%80GraphSAGE%E3%80%81GATs/')
+
+    if (typeof FB === 'object') {
+      FB.XFBML.parse(document.getElementsByClassName('post-meta-commentcount')[0])
+      FB.XFBML.parse(document.getElementById('post-comment'))
+    }
+    else {
+      let ele = document.createElement('script')
+      ele.setAttribute('src','https://connect.facebook.net/zh_TW/sdk.js#xfbml=1&version=v16.0')
+      ele.setAttribute('async', 'true')
+      ele.setAttribute('defer', 'true')
+      ele.setAttribute('crossorigin', 'anonymous')
+      ele.setAttribute('id', 'facebook-jssdk')
+      document.getElementById('fb-root').insertAdjacentElement('afterbegin',ele)
+    }
+  }
+
+  const fbModeChange = theme => {
+    const $fbComment = document.getElementsByClassName('fb-comments')[0]
+    if ($fbComment && typeof FB === 'object') {
+      $fbComment.setAttribute('data-colorscheme',theme)
+      FB.XFBML.parse(document.getElementById('post-comment'))
+    }
+  }
+
+  btf.addGlobalFn('themeChange', fbModeChange, 'facebook_comments')
+
+  if ('Facebook Comments' === 'Facebook Comments' || !false) {
+    if (false) btf.loadComment(document.querySelector('#post-comment .fb-comments'), loadFBComment)
+    else loadFBComment()
+  } else {
+    window.loadOtherComment = loadFBComment
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="algolia-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="search-wrap"><div id="algolia-search-input"></div><hr/><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-info"><div class="algolia-stats"></div><div class="algolia-poweredBy"></div></div></div></div></div><div id="search-mask"></div><script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.22.1/dist/algoliasearch-lite.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4.65.0/dist/instantsearch.production.min.js"></script><script src="/js/search/algolia.js?v=4.13.0"></script></div></div></body></html>
