@@ -1,0 +1,130 @@
+---
+title: 詞嵌入(word embedding)是什麼? Word2Vec Python 實作
+tags:
+  - LLM
+  - word embedding
+  - word2vec
+  - python
+  - gensim
+  - tensorflow
+categories:
+  - 學習筆記
+date: 2021-05-12 16:30:00
+---
+### 前言
+
+在自然語言處理中，有一個不得不提的概念叫做詞嵌入(word embedding)。那究竟什麼是詞嵌入，簡單的理解就是把文字轉換成向量的形式，使得相似的文字具有相似的向量。詞嵌入的方法不只一種，常見的方法包括One-Hot Encoding、Word2Vec、GloVe、BERT等等。
+
+##### 1. One-Hot Encoding
+
+    將每個詞編碼為一個高維稀疏向量，該向量中對應於該詞的索引位置為 1，其餘位置為 0。例如，在詞彙大小為 5 的詞庫中，"apple" 可能會被表示為`[1, 0, 0, 0, 0]`。這種方法存在 **維度詛咒**（Curse Of Dimensionality）的問題，向量維度隨詞彙表大小增大而增大，並且無法反映詞語的語義或上下文關係。因此，在現代 NLP 中已經不常使用。
+
+##### 2. Word2Vec
+
+    是一種基於局部上下文窗口的詞嵌入方法，它利用上下文中其他詞的出現來預測目標詞的語義向量表示。訓練完成後，生成的是靜態詞嵌入，這意味著每個詞的向量表示固定不變。
+
+##### 3. GloVe
+
+    與 Word2Vec 同屬靜態詞嵌入方法，但 GloVe 使用的是全局的詞共現矩陣信息來學習詞嵌入。通過構建大規模語料庫中的詞共現矩陣並進行矩陣分解，GloVe 可以捕捉到詞與詞之間的全局語義關係。
+
+##### 4. BERT
+
+    是一種基於 Transformer 架構的深度學習模型。與 Word2Vec 和 GloVe 的靜態嵌入不同，BERT 是動態詞嵌入方法，它能夠根據上下文動態生成詞的向量表示。
+
+### 正文
+
+今天主要想針對的是Word2Vec進行討論，並以python代碼進行實作。
+
+##### 1. CBOW v.s Skip-gram
+
+CBOW（Continuous Bag of Words）與 Skip-gram 是 Word2Vec 中兩個最主要的算法。兩者是非常相似的，如下圖所示都是用上下文中的詞來預測該詞。但 CBOW 是用上下文中的詞來預測中心詞，而 Skip-gram 是用中心詞來預測上下文中的詞。
+
+![](/Word2Vec-CBOW-and-Skip-gram-There-are-two-different-methods-in-the-Word2Vec-algorithm.png "Sentiment analysis on Twitter data with semi-supervised Doc2Vec - Scientific Figure on ResearchGate. Available from: https://www.researchgate.net/figure/Word2Vec-CBOW-and-Skip-gram-There-are-two-different-methods-in-the-Word2Vec-algorithm_fig2_320829283 [accessed 3 Sept 2024]")
+
+> | **特性**       | **CBOW (Continuous Bag of Words)**             | **Skip-gram**                        |
+> | -------------------- | ---------------------------------------------------- | ------------------------------------------ |
+> | **目標**       | 根據上下文詞預測目標詞                               | 根據目標詞預測上下文詞                     |
+> | **輸入**       | 上下文詞的集合                                       | 目標詞                                     |
+> | **輸出**       | 目標詞                                               | 上下文詞的集合                             |
+> | **運算過程**   | 將上下文詞向量平均（或加總），通過神經網絡預測目標詞 | 使用目標詞向量通過神經網絡預測每個上下文詞 |
+> | **計算複雜度** | 較低（一次性預測一個詞）                             | 較高（對每個上下文詞單獨預測）             |
+> | **語料庫要求** | 較大語料庫（更適合處理高頻詞）                       | 較小語料庫（更能捕捉低頻詞語義特徵）       |
+> | **優點**       | 計算速度快，適合高頻詞的預測                         | 能捕捉到低頻詞和上下文之間更細緻的語義關係 |
+> | **劣勢**       | 對於低頻詞的語義捕捉效果較差                         | 計算量較大                                 |
+>
+> (Powered by GPT-4o)
+
+這時候你可能會想，既然我們在做的是 word embedding，那目標不是應該要放在如何去得到一個可以表達文字關係的矩陣嗎？那怎麼會是根據上下文詞預測目標詞或是根據目標詞預測上下文詞呢？
+
+這個答案我們可以換個角度想，以 Skip-gram 為例，其實是我們在順練模型的時候會訓練到兩個向量：一個是從one-hot encoding 到 hidden layer 的向量 W，另一個是從hidden layer到output layer的向量 W'。
+
+- W  學習到的就是如何將每個詞在向量空間表示的方法，即是我們在做 word embedding 時正好需要的詞向量。
+- W' 學習到的是詞跟詞之間的關係。
+
+
+##### 2. 初步認識 Gensim
+
+[Gensim](https://radimrehurek.com/gensim/) 是 Python 中的一個免費開源庫，提供了豐富的文本處理工具。該庫以其清晰度、高效性和可擴展性著稱，並已在超過 2000 篇學術研究論文中被引用和使用。相較於 TensorFlow，Gensim 更加簡單易用，非常適合輕量級的應用場景。然而，它在自定義和靈活性方面略顯不足。
+
+**Gensim 庫中常見的幾個 module**
+
+- gensim.models：用於訓練和操作不同的模型，如 Word2Vec、FastText、Doc2Vec、LDA 等。(大部分的算法都是無監督的)
+- gensim.corpora：處理語料庫和詞典，如 Dictionary 和 MmCorpus。
+- gensim.similarities：計算文檔相似度，如 Similarity 和 SparseMatrixSimilarity。
+- gensim.matutils：進行向量操作，如計算餘弦相似度、轉換矩陣格式等。
+- gensim.utils：提供實用工具函數，如文本預處理和模型保存加載。
+- gensim.downloader：加載預訓練模型和數據集。
+
+##### 3. 在 Python 中使用 Gensim 庫
+
+範例使用美國證券交易委員會（SEC）10-K 文件中的 Item 7：Management's Discussion and Analysis（MD&A）部分作為訓練資料來訓練 Word2Vec 模型。MD&A 段落通常包含公司管理層對財務狀況、經營成果、風險因素及未來展望的討論，非常適合作為文本分析的資料來源。
+
+###### step 1: 建立環境 ( conda )
+```bash
+conda create -n word2vec_demo python=3.9
+conda activate word2vec_demo
+pip install --upgrade gensim
+```
+###### step 2: 讀取資料集
+```python
+import 
+
+```
+###### step 3: 訓練模型
+```python
+from gensim.models import Word2Vec
+
+# 設定訓練參數
+model = Word2Vec(sentences=sentences, size=100, window=5, min_count=5, workers=4, sg=1) # sg=0表示使用CBOW模型，sg=1表示使用Skip-gram模型
+
+# 保存模型
+model.save('word2vec_demo.model')
+```
+###### step 4: 載入模型
+```python
+from gensim.models import Word2Vec
+
+# 載入模型
+model = Word2Vec.load('word2vec_demo.model')
+```
+###### step 5: 預測詞向量
+```python
+# 預測詞向量
+vector = model.wv['apple']
+```
+###### step 6: 實現相似詞查詢
+```python
+# 找出與 apple 相似的詞
+similar_words = model.wv.most_similar(positive=['apple'], topn=10)
+
+# 找出與 banana 相似的詞
+similar_words = model.wv.most_similar(positive=['banana'], topn=10)
+```
+###### step 7: 實現詞向量相似度計算
+```python
+# 計算 apple 與 banana 的相似度
+similarity = model.wv.similarity('apple', 'banana')
+```
+#### 附錄
+
+---
