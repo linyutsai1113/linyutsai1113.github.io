@@ -182,13 +182,6 @@
   </url>
   
   <url>
-    <loc>https://linyutsai1113.github.io/tags/ML-DL/</loc>
-    <lastmod>2025-08-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://linyutsai1113.github.io/tags/Heterogeneous-Graph/</loc>
     <lastmod>2025-08-21</lastmod>
     <changefreq>weekly</changefreq>
@@ -197,6 +190,20 @@
   
   <url>
     <loc>https://linyutsai1113.github.io/tags/RGCN/</loc>
+    <lastmod>2025-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://linyutsai1113.github.io/tags/ML-DL/</loc>
+    <lastmod>2025-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://linyutsai1113.github.io/tags/over-smoothing/</loc>
     <lastmod>2025-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -218,13 +225,6 @@
   
   <url>
     <loc>https://linyutsai1113.github.io/tags/RDP/</loc>
-    <lastmod>2025-08-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://linyutsai1113.github.io/tags/over-smoothing/</loc>
     <lastmod>2025-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
